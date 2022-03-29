@@ -1,0 +1,37 @@
+version: 3.0.0
+
+services:
+        # This is our server
+        node-1:
+              image: node1:latest
+              build:
+                  context: ./node1
+                  dockerfile: Dockerfile
+              command: bash -c "while true; do sleep 1; done"
+        
+        # Reads data from telementry server
+        grafana-dashboard:
+              image: grafana/grafana-oss:8.2.6
+              env_file:
+                  - grafana/grafana.env
+              ports:
+                  - "3000:3000"
+        
+        # Stores the data from telemetry server
+        influxdb:
+              image: influxdb:1.8-alpine
+              env_file:
+                  - influxdb/influxdb.env
+              ports:
+                  - "8086:8088"
+        
+        # Monitors defined containers and pushes metrics to influxdb
+        telegraf:
+            image: telegraf:1.12.3-alpine
+            env_file:
+                - telegraf/telegraf.env
+            volumes:
+              - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf
+              - /var/run/docker.sock:/var/run/docker.sock
+            ports:
+                - "8081:8081"
